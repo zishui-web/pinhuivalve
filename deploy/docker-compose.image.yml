@@ -1,0 +1,42 @@
+# 只有镜像、没有源码时的启动文件（不需要 Node、不需要 npm、不需要构建）
+#
+# 用法：
+#   1) 在构建机导出镜像：
+#        docker compose build
+#        docker save pinhuivalve:latest | gzip > pinhuivalve-latest.tar.gz
+#   2) 拷到目标机并加载：
+#        gunzip -c pinhuivalve-latest.tar.gz | docker load
+#   3) 把本文件放到目标机的项目目录下（与 logs/ 同级，否则日志会落到当前文件所在目录）：
+#        cp deploy/docker-compose.image.yml ./docker-compose.image.yml
+#        docker compose -f docker-compose.image.yml up -d
+#
+# 说明：镜像里已内置 /etc/nginx/logs-auth.conf（默认不鉴权）。若要改日志页密码又不想重建镜像，
+#      取消下面 volumes 里 logs-auth 那行的注释，并确保 deploy/logs-auth.conf 存在。
+
+name: pinhuivalve
+
+services:
+  web:
+    image: pinhuivalve:latest
+    container_name: pinhuivalve
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    volumes:
+      - ./logs:/var/log/nginx
+      # - ./deploy/logs-auth.conf:/etc/nginx/logs-auth.conf:ro
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

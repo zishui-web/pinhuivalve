@@ -17,6 +17,9 @@ services:
       - ./deploy/logs-auth.conf:/etc/nginx/logs-auth.conf:ro
     environment:
       TZ: ${TZ:-Asia/Shanghai}
+    # 让容器在“只读根文件系统”加固环境里也能启动（nginx pid/临时文件写 /tmp）
+    tmpfs:
+      - /tmp
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null || exit 1"]
