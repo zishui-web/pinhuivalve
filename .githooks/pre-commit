@@ -1,0 +1,10 @@
+#!/bin/sh
+# pre-commit：本机存在内容拦截代理，git 可能把文本文件读成密文并当二进制提交。
+# 这里在提交前用明文重建对象，保证仓库里存的是正常文本。
+# 启用：git config core.hooksPath .githooks
+
+set -e
+ROOT=$(git rev-parse --show-toplevel)
+if [ -f "$ROOT/scripts/git-safe-add.py" ]; then
+  python3 "$ROOT/scripts/git-safe-add.py" || exit 1
+fi
