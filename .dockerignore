@@ -1,0 +1,7 @@
+node_modules
+.git
+.DS_Store
+docs
+scripts
+*.log
+# 注意：dist 不能排除 —— deploy/Dockerfile.runtime 需要直接用它

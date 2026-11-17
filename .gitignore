@@ -1,0 +1,21 @@
+# 依赖
+node_modules/
+
+# 构建产物（由 CI 或本地 npm run build 生成）
+dist/
+
+# 日志
+*.log
+npm-debug.log*
+
+# 编辑器 / 系统
+.DS_Store
+.vscode/
+.idea/
+
+# 本地环境变量
+.env
+.env.local
+
+# 临时文件
+*.local

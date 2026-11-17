@@ -1,0 +1,9 @@
+# 仅打包已构建好的 dist/（跨机器/跨架构导出时用这个最稳）
+# 用法：先在任意机器 npm run build，然后
+#   docker build --platform linux/amd64 -f deploy/Dockerfile.runtime -t pinhuivalve:1.0-amd64 .
+FROM nginx:alpine
+COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+COPY dist /usr/share/nginx/html
+EXPOSE 80
+HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://127.0.0.1/ >/dev/null || exit 1
+CMD ["nginx", "-g", "daemon off;"]
