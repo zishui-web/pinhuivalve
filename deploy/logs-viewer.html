@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>访问日志 · 浙江品汇阀门有限公司</title>
+<style>
+  :root{
+    --navy:#061b30; --navy2:#0a2540; --line:rgba(255,255,255,.09);
+    --blue:#3c8ad6; --ink:#e8eef5; --muted:#8fa3b8;
+    --ok:#3fb950; --warn:#d29922; --err:#f85149;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--navy);color:var(--ink);
+       font:14px/1.6 "SF Mono",Menlo,Consolas,"PingFang SC","Microsoft YaHei",monospace}
+  a{color:var(--blue);text-decoration:none}
+  header{padding:18px 22px;border-bottom:1px solid var(--line);
+         display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--navy2)}
+  header h1{margin:0;font-size:16px;font-weight:600;letter-spacing:.02em}
+  header .en{color:var(--muted);font-size:11px;letter-spacing:.18em}
+  header .sp{flex:1}
+  header a.btn,button{appearance:none;border:1px solid var(--line);background:transparent;
+        color:var(--ink);padding:7px 12px;border-radius:3px;font:inherit;font-size:12.5px;cursor:pointer}
+  header a.btn:hover,button:hover{border-color:var(--blue);color:#fff}
+  button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  main{padding:18px 22px 40px}
+  .stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px}
+  .card{border:1px solid var(--line);border-radius:4px;padding:12px 14px;background:rgba(255,255,255,.02)}
+  .card b{display:block;font-size:20px;line-height:1.2}
+  .card span{color:var(--muted);font-size:11.5px;letter-spacing:.06em}
+  .card.ok b{color:var(--ok)} .card.warn b{color:var(--warn)} .card.err b{color:var(--err)}
+  .bar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+  .bar input{background:transparent;border:1px solid var(--line);color:var(--ink);
+             padding:7px 10px;border-radius:3px;font:inherit;font-size:12.5px;min-width:220px}
+  .bar .hint{color:var(--muted);font-size:12px}
+  .wrap{border:1px solid var(--line);border-radius:4px;overflow:auto;max-height:calc(100vh - 300px)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:900px}
+  th{position:sticky;top:0;background:#0d2c4a;text-align:left;padding:9px 12px;
+     font-weight:600;color:#cfe0f0;white-space:nowrap;border-bottom:1px solid var(--line)}
+  td{padding:7px 12px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:top;white-space:nowrap}
+  tr:hover td{background:rgba(60,138,214,.08)}
+  td.path{white-space:normal;word-break:break-all;max-width:520px;color:#cfe0f0}
+  td.ua{white-space:normal;max-width:300px;color:var(--muted);font-size:11.5px}
+  .st{display:inline-block;min-width:42px;text-align:center;border-radius:3px;padding:1px 6px;font-weight:600}
+  .s2{background:rgba(63,185,80,.15);color:var(--ok)}
+  .s3{background:rgba(60,138,214,.18);color:#79b8f3}
+  .s4{background:rgba(210,153,34,.18);color:var(--warn)}
+  .s5{background:rgba(248,81,73,.18);color:var(--err)}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+  .foot{margin-top:12px;color:var(--muted);font-size:12px;line-height:1.9}
+  .err-box{padding:16px;border:1px solid rgba(248,81,73,.4);background:rgba(248,81,73,.08);
+           border-radius:4px;color:#ffb3ae;margin-bottom:14px}
+  @media (max-width:900px){
+    .stats{grid-template-columns:repeat(3,1fr)}
+    .wrap{max-height:none}
+    main{padding:14px}
+    header{padding:14px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>访问日志 / Access Log</h1>
+    <div class="en">PINHUI VALVE · NGINX</div>
+  </div>
+  <div class="sp"></div>
+  <button id="btnAll" class="on">全部</button>
+  <button id="btnErr">仅有错误</button>
+  <button id="btnAuto" class="on">自动刷新 5s</button>
+  <a class="btn" href="/logs/access.log" target="_blank">原始 access.log</a>
+  <a class="btn" href="/logs/error.log" target="_blank">error.log</a>
+</header>
+
+<main>
+  <div id="alert"></div>
+
+  <div class="stats">
+    <div class="card"><b id="cTotal">0</b><span>总请求</span></div>
+    <div class="card ok"><b id="c2xx">0</b><span>2xx 成功</span></div>
+    <div class="card"><b id="c3xx">0</b><span>3xx 跳转</span></div>
+    <div class="card warn"><b id="c4xx">0</b><span>4xx 客户端</span></div>
+    <div class="card err"><b id="c5xx">0</b><span>5xx 服务端</span></div>
+    <div class="card"><b id="cAvg">0</b><span>平均耗时 ms</span></div>
+  </div>
+
+  <div class="bar">
+    <input id="q" placeholder="过滤：路径 / IP / 状态码，如 /products 或 404" />
+    <span class="hint" id="meta">—</span>
+  </div>
+
+  <div class="wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:170px">时间</th>
+          <th style="width:130px">来源 IP</th>
+          <th>请求</th>
+          <th style="width:80px">状态</th>
+          <th style="width:80px">大小</th>
+          <th style="width:80px">耗时</th>
+          <th>User-Agent</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty">正在读取 /logs/access.log …</div>
+  </div>
+
+  <div class="foot">
+    日志格式：<code>$remote_addr - [$time_iso8601] "$request" $status $body_bytes_sent ${request_time}s "$http_referer" "$http_user_agent"</code><br />
+    数据来源：容器内 <code>/var/log/nginx/access.log</code>（宿主机 <code>./logs/access.log</code>），页面每 5 秒拉取一次，最多显示最近 1000 条。
+  </div>
+</main>
+
+<script>
+(function () {
+  var all = [], onlyErr = false, auto = true, timer = null;
+  var rowsEl = document.getElementById('rows');
+  var emptyEl = document.getElementById('empty');
+  var alertEl = document.getElementById('alert');
+  var qEl = document.getElementById('q');
+
+  var RE = /^(\S+) - \[([^\]]+)\] "([^"]*)" (\d{3}) (\d+|-) ([\d.]+)s "([^"]*)" "([^"]*)"/;
+
+  function parse(text) {
+    var out = [];
+    var lines = text.split('\n');
+    for (var i = lines.length - 1; i >= 0 && out.length < 1000; i--) {
+      var m = RE.exec(lines[i]);
+      if (!m) continue;
+      out.push({
+        ip: m[1], time: m[2], req: m[3], status: +m[4],
+        bytes: m[5] === '-' ? 0 : +m[5], cost: parseFloat(m[6]) * 1000,
+        ref: m[7], ua: m[8]
+      });
+    }
+    return out;
+  }
+
+  function kb(n) {
+    if (!n) return '-';
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1048576).toFixed(2) + ' MB';
+  }
+
+  function ms(v) {
+    if (!isFinite(v)) return '-';
+    return (v < 10 ? v.toFixed(1) : v.toFixed(0)) + ' ms';
+  }
+
+  function cls(s) {
+    return s >= 500 ? 's5' : s >= 400 ? 's4' : s >= 300 ? 's3' : 's2';
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  function render() {
+    var q = qEl.value.trim().toLowerCase();
+    var list = all.filter(function (r) {
+      if (onlyErr && r.status < 400) return false;
+      if (!q) return true;
+      return (r.req + ' ' + r.ip + ' ' + r.status + ' ' + r.ua).toLowerCase().indexOf(q) >= 0;
+    });
+
+    var html = '';
+    for (var i = 0; i < list.length; i++) {
+      var r = list[i];
+      var ua = r.ua.length > 110 ? r.ua.slice(0, 110) + '…' : r.ua;
+      html += '<tr>' +
+        '<td>' + esc(r.time.replace('T', ' ').replace(/([+-]\d\d:\d\d)$/, ' $1')) + '</td>' +
+        '<td>' + esc(r.ip) + '</td>' +
+        '<td class="path">' + esc(r.req) + '</td>' +
+        '<td><span class="st ' + cls(r.status) + '">' + r.status + '</span></td>' +
+        '<td>' + kb(r.bytes) + '</td>' +
+        '<td>' + ms(r.cost) + '</td>' +
+        '<td class="ua">' + esc(ua) + '</td>' +
+        '</tr>';
+    }
+    rowsEl.innerHTML = html;
+    emptyEl.style.display = list.length ? 'none' : 'block';
+    emptyEl.textContent = list.length ? '' : (all.length ? '没有匹配的记录' : '暂无日志（访问几个页面后会自动出现）');
+    document.getElementById('meta').textContent =
+      '显示 ' + list.length + ' / ' + all.length + ' 条 · 最近更新 ' + new Date().toLocaleTimeString('zh-CN');
+
+    var c = { n: all.length, s2: 0, s3: 0, s4: 0, s5: 0, t: 0 };
+    all.forEach(function (r) {
+      if (r.status < 300) c.s2++; else if (r.status < 400) c.s3++;
+      else if (r.status < 500) c.s4++; else c.s5++;
+      if (isFinite(r.cost)) c.t += r.cost;
+    });
+    document.getElementById('cTotal').textContent = c.n;
+    document.getElementById('c2xx').textContent = c.s2;
+    document.getElementById('c3xx').textContent = c.s3;
+    document.getElementById('c4xx').textContent = c.s4;
+    document.getElementById('c5xx').textContent = c.s5;
+    var avg = c.n ? c.t / c.n : 0;
+    document.getElementById('cAvg').textContent = avg < 10 ? avg.toFixed(1) : avg.toFixed(0);
+  }
+
+  function load() {
+    fetch('/logs/access.log?_=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function (t) {
+        alertEl.innerHTML = '';
+        all = parse(t);
+        render();
+      })
+      .catch(function (e) {
+        alertEl.innerHTML = '<div class="err-box">读取日志失败：' + esc(e.message) +
+          '<br>请确认容器已挂载 ./logs 到 /var/log/nginx，且 Nginx 已产生访问记录。</div>';
+      });
+  }
+
+  function startTimer() {
+    stopTimer();
+    if (auto) timer = setInterval(load, 5000);
+  }
+  function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
+
+  document.getElementById('btnAll').onclick = function () {
+    onlyErr = false; this.classList.add('on');
+    document.getElementById('btnErr').classList.remove('on'); render();
+  };
+  document.getElementById('btnErr').onclick = function () {
+    onlyErr = true; this.classList.add('on');
+    document.getElementById('btnAll').classList.remove('on'); render();
+  };
+  document.getElementById('btnAuto').onclick = function () {
+    auto = !auto; this.classList.toggle('on', auto);
+    auto ? startTimer() : stopTimer();
+  };
+  qEl.oninput = render;
+  document.addEventListener('visibilitychange', function () {
+    document.hidden ? stopTimer() : (auto && startTimer());
+  });
+
+  load();
+  startTimer();
+})();
+</script>
+</body>
+</html>
