@@ -6,7 +6,7 @@ RUN npm ci || npm install
 COPY . .
 RUN npm run build
 
-FROM nginx:alpine
+FROM nginx:1.31.2-alpine
 
 # 时区：让日志时间戳显示为北京时间（$time_iso8601 用容器本地时区）
 RUN apk add --no-cache tzdata \

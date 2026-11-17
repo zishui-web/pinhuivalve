@@ -1,7 +1,7 @@
 # 仅打包已构建好的 dist/（跨机器/跨架构导出时用这个最稳）
 # 用法：先在任意机器 npm run build，然后
 #   docker build --platform linux/amd64 -f deploy/Dockerfile.runtime -t pinhuivalve:1.0-amd64 .
-FROM nginx:alpine
+FROM nginx:1.31.2-alpine
 
 RUN apk add --no-cache tzdata \
  && mkdir -p /usr/share/nginx/logs-viewer /var/log/nginx \
