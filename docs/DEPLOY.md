@@ -118,7 +118,7 @@ docker compose ps                  # 看状态（healthy 表示就绪）
 docker compose logs -f web         # 实时看容器日志（等于 access.log 的 stdout 副本）
 ```
 
-默认访问 `http://服务器IP:8080`。改端口：`WEB_PORT=80 docker compose up -d`（或写进 `.env`）。
+默认访问 `http://服务器IP`（80 端口）。改端口：`WEB_PORT=8080 docker compose up -d`（或写进 `.env`）。
 
 常用运维命令：
 
@@ -133,7 +133,7 @@ docker compose pull && docker compose up -d   # 若改用远程镜像更新
 
 | 配置 | 作用 |
 |---|---|
-| `ports: "${WEB_PORT:-8080}:80"` | 宿主机端口可覆盖，默认 8080 |
+| `ports: "${WEB_PORT:-80}:80"` | 宿主机端口可覆盖，默认 80 |
 | `./logs:/var/log/nginx` | 访问日志/错误日志落盘到项目 `logs/` 目录 |
 | `./deploy/logs-auth.conf:/etc/nginx/logs-auth.conf:ro` | 日志页可选密码，改完不用重建镜像，`docker compose restart` 即可 |
 | `TZ=Asia/Shanghai` | 日志时间戳为北京时间 |
@@ -153,12 +153,12 @@ docker build -f deploy/Dockerfile -t pinhuivalve:1.0 .
 
 # 运行（注意挂载日志目录，否则日志只在容器里）
 mkdir -p logs
-docker run -d --name pinhuivalve -p 8080:80 --restart unless-stopped \
+docker run -d --name pinhuivalve -p 80:80 --restart unless-stopped \
   -v "$PWD/logs:/var/log/nginx" \
   -v "$PWD/deploy/logs-auth.conf:/etc/nginx/logs-auth.conf:ro" \
   -e TZ=Asia/Shanghai \
   pinhuivalve:1.0
-# 访问 http://服务器IP:8080
+# 访问 http://服务器IP
 ```
 
 导出镜像拷到**无外网**的机器：
@@ -166,7 +166,7 @@ docker run -d --name pinhuivalve -p 8080:80 --restart unless-stopped \
 ```bash
 docker save pinhuivalve:1.0 | gzip > pinhuivalve-1.0.tar.gz
 scp pinhuivalve-1.0.tar.gz user@target:/tmp/
-ssh user@target "gunzip -c /tmp/pinhuivalve-1.0.tar.gz | docker load && docker run -d -p 8080:80 --restart unless-stopped pinhuivalve:1.0"
+ssh user@target "gunzip -c /tmp/pinhuivalve-1.0.tar.gz | docker load && docker run -d -p 80:80 --restart unless-stopped pinhuivalve:1.0"
 ```
 
 `docker-compose.yml`（可选）：
@@ -175,7 +175,7 @@ ssh user@target "gunzip -c /tmp/pinhuivalve-1.0.tar.gz | docker load && docker r
 services:
   web:
     image: pinhuivalve:1.0
-    ports: ['8080:80']
+    ports: ['80:80']
     restart: unless-stopped
 ```
 
@@ -214,10 +214,10 @@ ss -lntp | grep -E ':(80|8080)' # 端口没被占用，占用就 WEB_PORT=8090
 cd pinhuivalve
 docker compose up -d --build
 docker compose ps                      # Up (healthy)
-curl -sI http://127.0.0.1:8080 | head -1
+curl -sI http://127.0.0.1 | head -1
 ```
 
-默认端口 8080；要 80 就 `WEB_PORT=80 docker compose up -d`。
+默认端口 80；要换端口 `WEB_PORT=8080 docker compose up -d`。
 首次构建 2–5 分钟（取决于网络），之后改代码只需 `docker compose up -d --build`，有缓存会快很多。
 
 ### 方式 B：只有镜像，不起 Node（推荐）
@@ -241,9 +241,9 @@ docker compose -f docker-compose.image.yml up -d
 ### 自检（起来了不等于能用）
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/                       # 200
-curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/products/pz73-pz43     # 200（回退生效）
-curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/logs                   # 200
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1/                       # 200
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1/products/pz73-pz43     # 200（回退生效）
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1/logs                   # 200
 ls -lh logs/access.log                                                                 # 有内容
 ```
 
@@ -252,7 +252,7 @@ ls -lh logs/access.log                                                          
 | 报错 | 原因 | 处理 |
 |---|---|---|
 | `no such file or directory: Dockerfile` / `failed to read dockerfile` | 只拷了 compose，没拷 `deploy/` 与源码 | 拷完整仓库，或改走镜像模式 |
-| `Bind for 0.0.0.0:8080 failed: port is already allocated` | 宿主机 8080 被占 | `WEB_PORT=8090 docker compose up -d` |
+| `Bind for 0.0.0.0:80 failed: port is already allocated` | 宿主机 80 被占 | `WEB_PORT=8080 docker compose up -d` |
 | `[emerg] open() "/etc/nginx/logs-auth.conf" failed` | 该路径被建成目录（源文件缺失） | `rm -rf deploy/logs-auth.conf` 后重新检出/新建空文件 |
 | `nginx: [emerg] unknown directive` / 容器反复 Restarting | 改了 nginx.conf 有语法错 | `docker compose logs web` 看行号，或 `docker run --rm -v $PWD/deploy/nginx.conf:/etc/nginx/nginx.conf nginx:1.31.2-alpine nginx -t` |
 | `pwrite() "/var/run/nginx.pid" failed (1: Operation not permitted)` | 宿主对 `/var/run` 写入受限：只读根文件系统、安全加固、SELinux/gVisor 等 | 已修复：pid 与临时目录改到 `/tmp`，compose 加 `tmpfs: /tmp`。拉到旧镜像请 `docker compose build` 重建 |
@@ -416,7 +416,7 @@ docker version --format '{{.Server.Arch}}'
 
 | 方式 | 命令 | 说明 |
 |---|---|---|
-| 网页 | 浏览器打开 `http://服务器IP:8080/logs` | 结构化表格：时间、IP、请求、状态码、大小、耗时、UA，带统计与筛选 |
+| 网页 | 浏览器打开 `http://服务器IP/logs` | 结构化表格：时间、IP、请求、状态码、大小、耗时、UA，带统计与筛选 |
 | 原始文件 | `tail -f logs/access.log` | 宿主机目录，就是完整日志原文 |
 | 容器标准输出 | `docker compose logs -f web` | 与文件同一份（Nginx 同时写文件与 stdout） |
 

@@ -89,7 +89,7 @@ location / {
 
 ```bash
 # 方式一：docker compose（推荐，构建+启动+日志挂载一步到位）
-docker compose up -d --build      # http://服务器IP:8080
+docker compose up -d --build      # http://服务器IP（默认 80 端口）
 docker compose logs -f web        # 实时日志
 
 # 方式一·仅镜像（目标机不需要 Node/npm/源码，适合离线、内网、生产）
@@ -103,12 +103,12 @@ npm run build && rsync -avz --delete dist/ user@server:/var/www/pinhuivalve/
 
 # 方式三：纯 docker 命令
 docker build -f deploy/Dockerfile -t pinhuivalve:1.0 .
-docker run -d -p 8080:80 --restart unless-stopped -v "$PWD/logs:/var/log/nginx" pinhuivalve:1.0
+docker run -d -p 80:80 --restart unless-stopped -v "$PWD/logs:/var/log/nginx" pinhuivalve:1.0
 ```
 
 ## 日志
 
-- 网页查看：`http://服务器IP:8080/logs` —— 表格化展示时间、IP、请求、状态码、大小、耗时、UA，
+- 网页查看：`http://服务器IP/logs` —— 表格化展示时间、IP、请求、状态码、大小、耗时、UA，
   带 2xx/4xx/5xx 统计、关键字筛选、仅有错误、5 秒自动刷新（默认对所有 IP 开放）
 - 文件查看：`tail -f logs/access.log`、`logs/error.log`
 - 容器输出：`docker compose logs -f web`
