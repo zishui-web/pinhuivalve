@@ -48,7 +48,7 @@ const apps = [
           </div>
         </div>
         <div class="hero__art">
-          <img src="/images/p-pz73.png" alt="品汇 PZ73 系列刀闸阀" />
+          <img src="/images/p-hero-valve.png" alt="品汇 PZ73 系列刀闸阀" />
         </div>
       </div>
 

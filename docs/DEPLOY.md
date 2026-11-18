@@ -281,6 +281,24 @@ Nginx 默认把 pid 写到 `/var/run/nginx.pid`，于是启动时报：
 如果你自己写 `docker run`，记得补上 `--tmpfs /tmp`，否则只读根文件系统下会报
 `mkdir() "/tmp/client_temp" failed (30: Read-only file system)`。
 
+### 构建报 `[UNLOADABLE_DEPENDENCY] Could not load src/data/...` 怎么办
+
+先确认是不是本机的内容拦截（安全/加密代理）导致的——stat 尺寸比实际读取长度大（通常正好多 4096 字节）：
+
+```bash
+python3 -c "import os;f='src/data/products.js';print('stat',os.stat(f).st_size,'读取',len(open(f,'rb').read()))"
+```
+
+如果是，执行仓库自带脚本修复后重新构建：
+
+```bash
+bash scripts/unseal.sh        # 用 git 重新写出文件（会丢弃这些文件未提交的修改）
+docker compose build
+```
+
+该现象只影响「被加密代理处理过的文件」，本地 `npm run build` 往往仍能通过，
+但 Docker 构建上下文与镜像内的打包器会读到残缺内容。
+
 ### 目标机起不来，按这个顺序查
 
 ```bash

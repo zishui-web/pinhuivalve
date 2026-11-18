@@ -15,7 +15,7 @@ export const categories = [
     name: '浆液阀系列',
     en: 'SLURRY VALVE',
     desc: '一体式阀体、无凹槽阀座、弹性 U 型密封，双向密封零泄漏，专为高浓度浆液与粉料输送设计。',
-    image: '/images/p-slurry.png'
+    image: '/images/p-slurry-a.png'
   },
   {
     id: 'penetrating',
@@ -332,8 +332,13 @@ export const products = [
     name: 'GGG40 双向密封系列浆液阀',
     nameEn: 'BIDIRECTIONAL SLURRY VALVE',
     category: 'slurry',
-    image: '/images/p-slurry.png',
-    gallery: ['/images/p-slurry-manual.png', '/images/p-group-slurry.png'],
+    image: '/images/p-slurry-a.png',
+    gallery: [
+      '/images/p-slurry-b.png',
+      '/images/p-slurry-c.png',
+      '/images/p-slurry-d.png',
+      '/images/p-group-slurry.png'
+    ],
     tagline: '无凹槽双密封 · 零泄漏 · 全通径',
     summary:
       '产品别名“无凹槽双密封刀闸阀”。一体式阀体、弹性 U 型密封条、无凹槽阀座设计，双向密封零泄漏，专用于水泥浆、矿砂、煤泥、纸浆等高浓度介质。',

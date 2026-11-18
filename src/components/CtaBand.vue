@@ -8,7 +8,7 @@ const props = defineProps({
 })
 const products = [
   '/images/p-pz73.png',
-  '/images/p-slurry.png',
+  '/images/p-slurry-a.png',
   '/images/p-scz673.png',
   '/images/p-ceramic-knife.png',
   '/images/p-lmd.png'

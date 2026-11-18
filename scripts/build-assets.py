@@ -13,6 +13,8 @@ os.makedirs(OUT, exist_ok=True)
 P62 = os.path.join(SRC, "品汇1-62", "品汇1-62")
 P82 = os.path.join(SRC, "品汇63-82")
 WX = os.path.join(SRC, "联系方式")
+SLURRY = os.path.join(SRC, "浆液阀系列 ")   # 目录名末尾带空格，勿删
+HOME = os.path.join(SRC, "首页")
 
 
 def save_webp(img, name, max_w=None, quality=82):
@@ -134,6 +136,12 @@ PRODUCTS = {
     "p-group-scz.png": ("71.JPG", "穿透式系列"),
     "p-group-ceramic.png": ("74.JPG", "陶瓷系列"),
     "p-group-square.png": ("78.JPG", "方形系列"),
+    # 浆液阀系列（素材/浆液阀系列 ）与首页主图（素材/首页）
+    "p-hero-valve.png": ("@HOME/微信图片_20261117160022_725_225.jpg", "首页主图：PZ73 刀闸阀双联"),
+    "p-slurry-a.png": ("@SLURRY/微信图片_20261117151756_716_225.jpg", "浆液阀 手动 正面"),
+    "p-slurry-b.png": ("@SLURRY/微信图片_20261117151756_714_225.jpg", "浆液阀 手动 大规格"),
+    "p-slurry-c.png": ("@SLURRY/微信图片_20261117151756_717_225.jpg", "浆液阀 手动 中型"),
+    "p-slurry-d.png": ("@SLURRY/微信图片_20261117151756_715_225.jpg", "浆液阀 手动 小规格"),
 }
 
 print("[1/3] logo")
@@ -143,7 +151,14 @@ for name, f in FACTORY.items():
     save_webp(Image.open(os.path.join(P62, f)), name, max_w=1920, quality=80)
 print("[3/3] 产品图（透明底）")
 for name, (f, desc) in PRODUCTS.items():
-    src = os.path.join(P62, f[1:] + ".JPG") if f.startswith("@") else os.path.join(P82, f)
+    if f.startswith("@HOME/"):
+        src = os.path.join(HOME, f[6:])
+    elif f.startswith("@SLURRY/"):
+        src = os.path.join(SLURRY, f[8:])
+    elif f.startswith("@"):
+        src = os.path.join(P62, f[1:] + ".JPG")
+    else:
+        src = os.path.join(P82, f)
     cutout(src, name)
 
 # 微信名片：统一画布尺寸（两张图原始长宽比不同，统一到 360x480 后再等比缩放居中）
