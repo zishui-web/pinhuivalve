@@ -45,7 +45,7 @@ export const company = {
   ],
   contacts: [
     { title: '销售咨询', name: '郭经理', phone: '13868399046' },
-    { title: '销售咨询', name: '许经理', phone: '13587739590' }
+    { title: '销售咨询', name: '许经理', phone: '15057598392' }
   ],
   address: '浙江省温州市永嘉县瓯北街道马岙村',
   addressFull: '浙江省温州市永嘉县瓯北街道马岙村（马岙工业区）',
