@@ -59,7 +59,16 @@ const nav = [
       </div>
 
       <div class="footer__bottom">
-        <p>© {{ year }} {{ company.name }}　版权所有</p>
+        <p class="footer__copyright">
+          {{ year }} {{ company.name }}
+          <span class="footer__separator">|</span>
+          <a
+            class="footer__filing"
+            href="https://beian.miit.gov.cn/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >鄂ICP备2026069603号</a>
+        </p>
         <p class="footer__meta">
           <span>{{ company.brandEn }}</span>
           <span class="dot">·</span>
@@ -187,6 +196,20 @@ const nav = [
 
 .dot {
   opacity: 0.4;
+}
+
+.footer__separator {
+  margin: 0 8px;
+  opacity: 0.4;
+}
+
+.footer__filing {
+  color: inherit;
+  transition: color 0.2s var(--ease);
+}
+
+.footer__filing:hover {
+  color: #fff;
 }
 
 @media (max-width: 1080px) {
